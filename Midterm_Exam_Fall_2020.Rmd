@@ -169,14 +169,15 @@ If I do nothing-no killing, no death, no assistance-the score will be at around 
 
 After all the analysis, simple linear regression model is the best model for the data, due to all the categorical variables are not strongly correlated to the performance score. Although the p-value is under 0.05, I still cannot say that it is an optimal model for the effect size is not appropriate. And the number of death plays an important role in assessing the performance for the parameter of it is the highest. If I want to keep high score in the future game, saving life is more significant than killing.     
 And just as the GH textbook mentioned:"In various limiting cases, the classical and multilevel approaches coincide. When there is very little group-level variation, the multilevel model reduces to classical regression with no group indicators","When the number of groups is small (less than five, say), there is typically not enough information to accurately estimate group-level variation. As a result, multilevel models in this setting typically gain little beyond classical varying-coefficient models." In this data, using multilevel model just like the same as classical regression for the number of group is small and the group-level variation is small.     
-Also, EDA sometimes will treat. In the EDA part seems all the categorical variables can play roles in the model, but actually none of them. And the line seems that number of killing has less impacts than assistance, but the results shows that killing affects more than number of assistance.
+Also, in the EDA part seems all the categorical variables can play roles in the model, but actually none of them. And the line seems that number of killing has less impacts than assistance, but the results shows that killing affects more than number of assistance. Maybe it because the sample size is too small, so there are occasions to make it different.
 
 
 ### Limitations and future opportunity. (10pts)
 
 1.sample size is the most important aspect that improve the model. For now in each group I only have 7 observations. It is far from touching the truth.     
 2.In a game, there are lots of variables will influence the score, not only the variable listed in the data, so I can include more different variables(ranks, when I played, golds, participation rate, etc).     
-3.If I collect more data, maybe there will be correlation between partners, roles or results of the game with score.      
+3.If I collect more data, maybe there will be correlation between partners, roles or results of the game with score.     
+4.EDA show different results with the model, try to use larger data to see if EDA shows the same conclusion with model. 
 
 ### Comments or questions
  
