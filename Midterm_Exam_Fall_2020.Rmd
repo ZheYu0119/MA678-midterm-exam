@@ -167,7 +167,8 @@ If I do nothing-no killing, no death, no assistance-the score will be at around 
 
 ### Discussion (10pts)
 
-After all the analysis, simple linear regression model is the best model for the data, due to all the categorical variables are not strongly correlated to the performance score. Although the p-value is under 0.05, I still cannot say that it is an optimal model for the effect size is not appropriate. And the number of death plays an important role in assessing the performance for the parameter of it is the highest. If I want to keep high score in the future game, saving life is more significant than killing.
+After all the analysis, simple linear regression model is the best model for the data, due to all the categorical variables are not strongly correlated to the performance score. Although the p-value is under 0.05, I still cannot say that it is an optimal model for the effect size is not appropriate. And the number of death plays an important role in assessing the performance for the parameter of it is the highest. If I want to keep high score in the future game, saving life is more significant than killing.     
+And just as the GH textbook mentioned:"In various limiting cases, the classical and multilevel approaches coincide. When there is very little group-level variation, the multilevel model reduces to classical regression with no group indicators","When the number of groups is small (less than five, say), there is typically not enough information to accurately estimate group-level variation. As a result, multilevel models in this setting typically gain little beyond classical varying-coefficient models." In this data, using multilevel model just like the same as classical regression for the number of group is small and the group-level variation is small.
 
 
 ### Limitations and future opportunity. (10pts)
@@ -178,5 +179,4 @@ After all the analysis, simple linear regression model is the best model for the
 
 ### Comments or questions
  
-1.Although I tried to use multilevel models, I am still not sure if this kind of data is suitable for multilevel.           
-2.For there are three continuous outcome so it is a little bit difficult to draw the plots. If indeed that partners or roles will influence the score, I still not sure how to visualize it.     
+For there are three continuous outcome so it is a little bit difficult to draw the plots. If indeed that `partner` or `role` will influence the score, I still not sure how to visualize it.     
