@@ -1,0 +1,182 @@
+---
+title: "Midterm Exam"
+author: "Zhe Yu"
+date: "11/2/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(
+ggplot2,
+knitr,
+arm,
+data.table,
+foreign,
+gridExtra,
+car,
+stringr,
+rstan,
+rstanarm,
+zoo,
+tidyverse,
+pwr
+)
+```
+
+## Instruction
+
+This is your midterm exam that you are expected to work on it alone.  You may NOT  discuss any of the content of your exam with anyone except your instructor. This includes text, chat, email and other online forums.  We expect you to respect and follow the [GRS Academic and Professional Conduct Code](http://www.bu.edu/cas/files/2017/02/GRS-Academic-Conduct-Code-Final.pdf). 
+
+Although you may NOT ask anyone directly, you are allowed to use external resources such as R codes on the Internet.  If you do use someone's code, please make sure you clearly cite the origin of the code.
+
+When you finish, please compile and submit the PDF file and the link to the GitHub repository that contains the entire analysis.
+
+
+## Introduction
+
+In this exam, you will act as both the client and the consultant for the data that you collected in the data collection exercise (20pts).  Please note that you are not allowed to change the data.  The goal of this exam is to demonstrate your ability to perform the statistical analysis that you learned in this class so far.  It is important to note that significance of the analysis is not the main goal of this exam but the focus is on the appropriateness of your approaches.
+
+### Data Description (10pts)
+
+The data was collected from a Moba (Multiplayer Online Battle Arena) game, just like the game League Of Legend, and the data contain the results of each game I played with different people. I tried to collect all the data in a closest period, and I collected the information of winning, the performance score, the role I played and so on. So the question is: how factors (partner, number of kill...) affect my performance score? For in each game, there was an unique score assessing my performance in that game.     
+Column names:     
+`Partner`: bro means playing with my brother; alone means I play alone; friends means playing with my friends.     
+`win`: win this game or not.      
+`kill`: the number of killing.    
+`death`: the number of death.     
+`assist`: the number of assist ally killing enemy.     
+`score`: after each game, system will give a score to measure performance.       
+`role`: the role played in each game.     
+
+```{r }
+#import the data
+game <- read.csv("game.csv",header = T)
+game$partner <- as.factor(game$partner)
+game$role <- as.factor(game$role)
+game$win <- as.factor(game$win)
+game <- game[-c(15,18,22),]
+game$num <- as.factor(as.character(rep(1:7,3))) 
+```
+
+### EDA (10pts)
+
+```{r echo=FALSE, results='hide'}
+p1 <- ggplot(game,mapping=aes(x=partner,y=score))+geom_boxplot()+
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+p2 <- ggplot(game,mapping=aes(x=role,y=score))+geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+p3 <- ggplot(game,mapping=aes(x=win,y=score))+geom_boxplot()+
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+p4 <- ggplot(game,mapping=aes(x=kill,y=score))+geom_point()+
+  geom_smooth(method = "lm")
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+p5 <- ggplot(game,mapping=aes(x=death,y=score))+geom_point()+
+  geom_smooth(method = "lm")
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+p6 <- ggplot(game,mapping=aes(x=assist,y=score))+geom_point()+
+  geom_smooth(method = "lm")
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) 
+grid.arrange(p1,p2,p3,p4,p5,p6,ncol=3)
+```
+In the plots, it seems that when I play with my friends, I play support or I win the game that I will have higher score. The number of killing has a small impact on the score for the slope is small. But the number of death and assistance have negative and positive impact separately on score.
+
+### Power Analysis (10pts)
+
+```{r }
+pwr.anova.test(k=3 , n =7 , sig.level = 0.05, power = 0.8)
+pwr.anova.test(k=3 , f =0.25 , sig.level = 0.05, power = 0.8)
+```
+For I only have 7 observations in each group, so the effect size is 0.74 which is a little bit bigger. When using variance comparison, 0.25 always be the appropriate value for ES. And if I want to reach that value, I have to set around 52 observations in each group. If the effect size is too big, it will make the Type M error.
+
+### Modeling (10pts)
+
+```{r }
+#complete pooling
+fit_g <- lm(score~partner+role+win+kill+death+assist,data = game)
+summary(fit_g)
+fit_h=step(fit_g,direction="backward")
+summary(fit_h)
+```
+First I tried to put all the variables into the model, but seems some variables are not significant. So I used `step` function to drop some variables. And the remaining variables are `kill`, `death`, `assist`. all the categorical variables had been dropped. But I will still  try to use multilevel analysis to see if there are some difference between group.
+
+```{r}
+#varying intercept
+fit2 <- lmer(score~kill+death+assist+(1|partner),data = game)
+round(coef(fit2)$partner,digits = 2)
+fit3 <- lmer(score~kill+death+assist+(1|role),data = game)
+round(coef(fit3)$role,digits = 2)
+fit5 <- lmer(score~kill+death+assist+(1|win),data = game)
+round(coef(fit5)$win,digits = 2)
+```
+With the results above, it is clear that partner indeed has no impact on the score for with different partner the intercept are the same. And for `role` group and `win` group, there are some differences but they are small so I will not take any of them into consideration.
+
+```{r }
+#varying intercept and scope.
+fit4 <- lmer(score~kill+death+assist+(1+role|partner),data = game)
+coef(fit4)
+fit6 <- lmer(score~kill+death+assist+(1+win|partner),data = game)
+coef(fit4)
+```
+here I got the warning means that the model is too complex. So both of them are not appropriate. 
+
+### Validation (10pts)
+
+After trying different type of models, linear regression model stands out.
+
+```{r}
+summary(fit_h)
+```
+The R-squared is close to 1, and the p-value is lower than 0.05. But just mentioned above, although the p-value imply that the model is a good fit, the effect size suggests that sample size should be larger to have a real good fit.
+
+```{r message=FALSE, warning=FALSE}
+yhat <- 0.39*game$kill-0.52*game$death+0.29*game$assist+6.23
+ggplot(game)+
+  geom_point(mapping=aes(x=yhat,y=score,color=partner))+
+  geom_smooth(mapping=aes(x=yhat,y=score),method = "lm",color="red",se=F)+
+  geom_abline(intercept = 0,slope = 1)+
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13, face = "bold")) +
+  labs(title = "fitted value vs real value",x = "fitted value")
+```
+because the model has multiple continuous predictors, so I draw the fitted value vs real value, and compared with line y=x. The red line is the regression line and the black one is line y=x. It is clear that two lines almost overlapped, and dots are all close to the line.
+
+```{r echo=FALSE}
+ggplot(game)+
+  geom_point(mapping=aes(x=0.39*kill-0.52*death+0.29*assist+6.22,y=score-0.39*kill+0.52*death-0.29*assist-6.22,color=partner))+
+  geom_smooth(mapping=aes(x=0.39*kill-0.52*death+0.29*assist+6.22,y=score-0.39*kill+0.52*death-0.29*assist-6.22),method = "lm")+
+  theme(axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13, face = "bold")) +
+  labs(x = "fitted value",y="residual")
+```
+To see the fitted value vs residual, majority of residuals are close to 0. But still some dots are little bit fat from 0.
+
+### Inference (10pts)
+
+```{r }
+round(coef(fit_h),digits = 2)
+```
+If I do nothing-no killing, no death, no assistance-the score will be at around 6.23. And if I kill or assist to kill one more enemy in each game, the score will increase 0.39 and 0.29 separately. But if I dead one more time, the score will decrease 0.52. And there is no big difference when I play different roles or whether I won the game or who I play with. so I have stable performance in different situation.
+
+### Discussion (10pts)
+
+After all the analysis, simple linear regression model is the best model for the data, due to all the categorical variables are not strongly correlated to the performance score. Although the p-value is under 0.05, I still cannot say that it is an optimal model for the effect size is not appropriate. And the number of death plays an important role in assessing the performance for the parameter of it is the highest. If I want to keep high score in the future game, saving life is more significant than killing.
+
+
+### Limitations and future opportunity. (10pts)
+
+1.sample size is the most important aspect that improve the model. For now in each group I only have 7 observations. It is far from touching the truth.     
+2.In a game, there are lots of variables will influence the score, not only the variable listed in the data, so I can include more different variables(ranks, when I played, golds, participation rate, etc).     
+3.If I collect more data, maybe there will be correlation between partners, roles or results of the game with score.      
+
+### Comments or questions
+ 
+1.Although I tried to use multilevel models, I am still not sure if this kind of data is suitable for multilevel.           
+2.For there are three continuous outcome so it is a little bit difficult to draw the plots. If indeed that partners or roles will influence the score, I still not sure how to visualize it.     
